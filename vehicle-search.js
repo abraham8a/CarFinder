@@ -15,9 +15,9 @@ const CONFIG = {
   sentListingsFile: path.join(__dirname, 'sent-listings.json'),
   gmailSmtpHost: 'smtp.gmail.com',
   gmailSmtpPort: 587,
-  gmailSmtpUser: 'abraham8a@gmail.com',
+  gmailSmtpUser: 'abaham8a@gmail.com',
   gmailSmtpPass: process.env.GMAIL_APP_PASSWORD,
-  toEmail: 'abraham8a@gmail.com',
+  toEmail: 'abaham8a@gmail.com',
 };
 
 // Load previously sent listings
