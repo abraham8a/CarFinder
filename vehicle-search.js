@@ -88,35 +88,32 @@ function fetchUrl(url) {
 async function searchCraigslist() {
   const results = [];
   try {
-    // Search for vehicles in the Rio Grande Valley area
-    const craigslistUrl = `https://corpus.craigslist.org/search/cta?query=&max_price=${CONFIG.maxPrice}`;
+    // Search for vehicles in the Rio Grande Valley area (Corpus Christi)
+    const craigslistUrl = `https://corpus.craigslist.org/search/cta?query=&max_price=${CONFIG.maxPrice}&sort=rel`;
     console.log(`Searching Craigslist: ${craigslistUrl}`);
 
     const html = await fetchUrl(craigslistUrl);
     
-    // Parse HTML for listings (simple regex-based extraction)
-    const listingRegex = /<a href="([^"]+cta[^"]+)" title="([^"]+)"/g;
+    // Parse HTML for actual vehicle listing posts with price and description
+    const listingRegex = /<a[^>]*href="([^"]*\/[0-9]{10,}\.html)"[^>]*>\s*<span[^>]*>([^<]+)<\/span>[\s\S]*?<span class="result-price">\$?([\d,]+)<\/span>/g;
     let match;
 
     while ((match = listingRegex.exec(html)) !== null) {
       const url = match[1];
-      const title = match[2];
+      const title = match[2].trim();
+      const price = match[3].replace(/,/g, '');
 
       // Skip if it's a trap
       if (isTrap(title, '')) continue;
 
-      // Extract price from URL or title
-      const priceMatch = title.match(/\$[\d,]+/);
-      const price = priceMatch ? priceMatch[0] : 'N/A';
-
       results.push({
         source: 'Craigslist',
         title,
-        price,
+        price: `$${price}`,
         url: url.startsWith('http') ? url : `https://corpus.craigslist.org${url}`,
-        description: '',
+        description: `Corpus Christi area • ${price} miles from 78550`,
         timestamp: new Date().toISOString(),
-        id: url, // Use URL as unique identifier
+        id: url,
       });
     }
   } catch (err) {
@@ -230,25 +227,40 @@ async function sendEmail(listings) {
     });
 
     const htmlContent = `
-      <h2>🚗 New Vehicle Listings Found (${listings.length})</h2>
-      <p>Search: 78550 area, 60-mile radius, under $${CONFIG.maxPrice}</p>
-      <p>Searched at: ${new Date().toLocaleString()}</p>
-      <hr>
-      ${listings
-        .map(
-          (listing) => `
-        <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
-          <h3 style="margin: 0 0 10px 0;">${listing.title}</h3>
-          <p><strong>Source:</strong> ${listing.source}</p>
-          <p><strong>Price:</strong> ${listing.price}</p>
-          ${listing.description ? `<p><strong>Description:</strong> ${listing.description}</p>` : ''}
-          <p><a href="${listing.url}" style="background: #007bff; color: white; padding: 8px 12px; text-decoration: none; border-radius: 3px;">View Listing</a></p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #d32f2f; border-bottom: 3px solid #d32f2f; padding-bottom: 10px;">🚗 ${listings.length} New Vehicle Listing(s) Found</h1>
+        
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <p><strong>Search Area:</strong> 78550 (Los Fresnos) • 60-mile radius</p>
+          <p><strong>Price Range:</strong> Under $${CONFIG.maxPrice}</p>
+          <p><strong>Searched:</strong> ${new Date().toLocaleString()}</p>
         </div>
-      `
-        )
-        .join('')}
-      <hr>
-      <p style="font-size: 12px; color: #666;">Vehicle Finder Bot • Automatic search every 4 hours</p>
+
+        ${listings
+          .map(
+            (listing, index) => `
+          <div style="border: 2px solid #e0e0e0; padding: 20px; margin: 20px 0; border-radius: 8px; background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${index + 1}. ${listing.title}</h2>
+                <p style="margin: 5px 0; color: #d32f2f; font-size: 20px; font-weight: bold;">${listing.price}</p>
+              </div>
+              <span style="background: #007bff; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px;">${listing.source}</span>
+            </div>
+            
+            ${listing.description ? `<p style="margin: 10px 0; color: #666;">${listing.description}</p>` : ''}
+            
+            <a href="${listing.url}" style="display: inline-block; background: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; margin-top: 10px; font-weight: bold;">View Full Listing →</a>
+          </div>
+        `
+          )
+          .join('')}
+
+        <div style="border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: 30px; font-size: 12px; color: #999;">
+          <p>Vehicle Finder Bot • Automatically searches every 4 hours</p>
+          <p>Search parameters: 78550 area, 60-mile radius, under $${CONFIG.maxPrice}</p>
+        </div>
+      </div>
     `;
 
     const mailOptions = {
