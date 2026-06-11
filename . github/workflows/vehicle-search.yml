@@ -2,9 +2,8 @@ name: Vehicle Search Bot
 
 on:
   schedule:
-    # Runs every 4 hours (0, 4, 8, 12, 16, 20 UTC)
     - cron: '0 */4 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   search:
