@@ -1,0 +1,22 @@
+{
+  "name": "vehicle-finder-bot",
+  "version": "1.0.0",
+  "description": "Automated vehicle search bot for 78550 area with email notifications",
+  "main": "vehicle-search.js",
+  "scripts": {
+    "start": "node vehicle-search.js",
+    "test": "echo \"No tests configured\" && exit 0"
+  },
+  "keywords": [
+    "vehicle",
+    "marketplace",
+    "craigslist",
+    "autotrader",
+    "bot"
+  ],
+  "author": "abraham8a",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.7"
+  }
+}
