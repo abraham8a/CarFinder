@@ -20,5 +20,5 @@ jobs:
       
       - name: Run vehicle search
         env:
-          BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: node vehicle-search.js
