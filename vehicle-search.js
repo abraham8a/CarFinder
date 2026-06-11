@@ -13,11 +13,11 @@ const CONFIG = {
   maxPrice: 4000,
   checkInterval: 4 * 60 * 60 * 1000, // 4 hours
   sentListingsFile: path.join(__dirname, 'sent-listings.json'),
-  brevoEmail: 'support@tapminutes.app',
-  brevoSmtpHost: 'smtp-relay.brevo.com',
-  brevoSmtpPort: 587,
-  brevoSmtpUser: 'support@tapminutes.app',
-  brevoSmtpPass: process.env.BREVO_SMTP_KEY,
+  gmailSmtpHost: 'smtp.gmail.com',
+  gmailSmtpPort: 587,
+  gmailSmtpUser: 'abaham8a@gmail.com',
+  gmailSmtpPass: process.env.GMAIL_APP_PASSWORD,
+  toEmail: 'abaham8a@gmail.com',
 };
 
 // Load previously sent listings
@@ -36,6 +36,12 @@ function loadSentListings() {
 // Save sent listings
 function saveSentListings(listings) {
   try {
+    // In GitHub Actions, we can't persist state between runs easily
+    // So we'll just log it instead of saving to file
+    if (process.env.GITHUB_ACTIONS) {
+      console.log('GitHub Actions detected - listing tracking not persisted');
+      return;
+    }
     fs.writeFileSync(CONFIG.sentListingsFile, JSON.stringify(listings, null, 2), 'utf8');
   } catch (err) {
     console.error('Error saving sent listings:', err);
@@ -205,7 +211,7 @@ async function searchCargurus() {
   return results;
 }
 
-// Send email via Brevo
+// Send email via Gmail
 async function sendEmail(listings) {
   if (listings.length === 0) {
     console.log('No new listings found.');
@@ -214,12 +220,12 @@ async function sendEmail(listings) {
 
   try {
     const transporter = nodemailer.createTransport({
-      host: CONFIG.brevoSmtpHost,
-      port: CONFIG.brevoSmtpPort,
+      host: CONFIG.gmailSmtpHost,
+      port: CONFIG.gmailSmtpPort,
       secure: false,
       auth: {
-        user: CONFIG.brevoSmtpUser,
-        pass: CONFIG.brevoSmtpPass,
+        user: CONFIG.gmailSmtpUser,
+        pass: CONFIG.gmailSmtpPass,
       },
     });
 
@@ -246,8 +252,8 @@ async function sendEmail(listings) {
     `;
 
     const mailOptions = {
-      from: CONFIG.brevoEmail,
-      to: CONFIG.brevoEmail,
+      from: CONFIG.gmailSmtpUser,
+      to: CONFIG.toEmail,
       subject: `🚗 ${listings.length} New Vehicle Listing(s) Found - ${new Date().toLocaleDateString()}`,
       html: htmlContent,
     };
@@ -260,10 +266,36 @@ async function sendEmail(listings) {
   }
 }
 
+// Test email configuration
+async function testEmail() {
+  console.log('\n📧 Testing email configuration...');
+  try {
+    const transporter = nodemailer.createTransport({
+      host: CONFIG.gmailSmtpHost,
+      port: CONFIG.gmailSmtpPort,
+      secure: false,
+      auth: {
+        user: CONFIG.gmailSmtpUser,
+        pass: CONFIG.gmailSmtpPass,
+      },
+    });
+
+    await transporter.verify();
+    console.log('✅ Email configuration is valid!');
+    return true;
+  } catch (err) {
+    console.error('❌ Email configuration failed:', err.message);
+    return false;
+  }
+}
+
 // Main function
 async function main() {
   console.log(`\n[${new Date().toISOString()}] Starting vehicle search...`);
   console.log(`Search parameters: ${CONFIG.zipCode}, ${CONFIG.radiusMiles} miles, under $${CONFIG.maxPrice}`);
+  
+  // Test email first
+  const emailValid = await testEmail();
 
   const sentListings = loadSentListings();
   let allListings = [];
