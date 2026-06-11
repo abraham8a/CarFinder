@@ -17,7 +17,7 @@ const CONFIG = {
   brevoSmtpHost: 'smtp-relay.brevo.com',
   brevoSmtpPort: 587,
   brevoSmtpUser: 'support@tapminutes.app',
-brevoSmtpPass: process.env.BREVO_SMTP_KEY,
+  brevoSmtpPass: process.env.BREVO_SMTP_KEY,
 };
 
 // Load previously sent listings
