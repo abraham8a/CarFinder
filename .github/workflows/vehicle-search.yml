@@ -5,9 +5,6 @@ on:
     - cron: '0 */4 * * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   search:
     runs-on: ubuntu-latest
@@ -25,12 +22,3 @@ jobs:
         env:
           BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
         run: node vehicle-search.js
-      
-      - name: Commit and push
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "Vehicle Search Bot"
-          git add sent-listings.json
-          git commit -m "Update sent listings - $(date)" || echo "No changes"
-          git push
-        continue-on-error: true
